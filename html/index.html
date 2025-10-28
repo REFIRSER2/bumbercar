@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BumberCar</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- 로비 UI -->
+    <div id="lobby" class="container hidden">
+        <div class="lobby-container">
+            <div class="lobby-header">
+                <h1>🏎️ 범퍼카 로비</h1>
+                <button class="close-btn" onclick="closeLobby()">✕</button>
+            </div>
+
+            <div class="lobby-content">
+                <!-- 맵 선택 -->
+                <div class="section">
+                    <h2>맵 선택</h2>
+                    <div id="mapList" class="map-grid"></div>
+                </div>
+
+                <!-- 게임 모드 선택 -->
+                <div class="section">
+                    <h2>게임 모드</h2>
+                    <div id="gameModeList" class="gamemode-grid"></div>
+                </div>
+
+                <!-- 플레이어 목록 -->
+                <div class="section">
+                    <h2>플레이어 목록</h2>
+                    <div id="playerList" class="player-list"></div>
+                </div>
+
+                <!-- 버튼들 -->
+                <div class="section">
+                    <button class="btn btn-primary" onclick="toggleReady()">
+                        <span id="readyText">준비 완료</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="toggleSpectate()">
+                        <span id="spectateText">관전 모드</span>
+                    </button>
+                </div>
+
+                <!-- 자동 시작 타이머 -->
+                <div id="autoStartTimer" class="auto-start-timer hidden">
+                    <p>게임 시작까지: <span id="autoStartTime">30</span>초</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 게임 HUD -->
+    <div id="gameHUD" class="hud hidden">
+        <!-- 차량 스탯 -->
+        <div class="vehicle-stats">
+            <div class="stat-bar">
+                <span class="stat-label">❤️ 체력</span>
+                <div class="bar-container">
+                    <div id="healthBar" class="bar health-bar" style="width: 100%"></div>
+                    <span id="healthText" class="bar-text">1000/1000</span>
+                </div>
+            </div>
+            <div class="stat-row">
+                <div class="stat-item">
+                    <span class="stat-icon">⚔️</span>
+                    <span id="damageText">50</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">🛡️</span>
+                    <span id="defenseText">100</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">⚡</span>
+                    <span id="speedText">0</span> km/h
+                </div>
+            </div>
+        </div>
+
+        <!-- 아이템 슬롯 -->
+        <div class="item-slots">
+            <div class="item-slot" id="itemSlot1">
+                <span class="slot-key">G</span>
+                <div class="slot-content"></div>
+            </div>
+            <div class="item-slot" id="itemSlot2">
+                <span class="slot-key">H</span>
+                <div class="slot-content"></div>
+            </div>
+        </div>
+
+        <!-- 활성 효과 -->
+        <div id="activeEffects" class="active-effects"></div>
+
+        <!-- 라운드 타이머 -->
+        <div class="round-timer">
+            <span id="roundTimer">05:00</span>
+        </div>
+    </div>
+
+    <!-- 관전 UI -->
+    <div id="spectatorUI" class="spectator-ui hidden">
+        <div class="spectator-info">
+            <h3>관전 중: <span id="spectateTargetName">-</span></h3>
+            <p><span id="spectateIndex">1</span> / <span id="spectatTotal">1</span></p>
+        </div>
+        <div class="spectator-controls">
+            <p>좌클릭: 이전 | 우클릭: 다음</p>
+        </div>
+    </div>
+
+    <!-- 경계 이탈 타이머 -->
+    <div id="boundaryTimer" class="boundary-timer hidden">
+        <h2>⚠️ 경계 이탈!</h2>
+        <p class="timer-text"><span id="boundaryTime">5</span>초 후 폭발</p>
+    </div>
+
+    <!-- 폭탄 타이머 -->
+    <div id="bombTimer" class="bomb-timer hidden">
+        <h2>💣 폭탄!</h2>
+        <p class="timer-text"><span id="bombTime">60</span>초</p>
+        <p class="hint">다른 플레이어와 충돌하여 폭탄을 넘기세요!</p>
+    </div>
+
+    <!-- 결과 화면 -->
+    <div id="resultsScreen" class="results-screen hidden">
+        <div class="results-container">
+            <h1 class="results-title" id="winnerText">게임 종료</h1>
+            <div class="results-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>순위</th>
+                            <th>플레이어</th>
+                            <th>킬</th>
+                            <th>데스</th>
+                            <th>데미지</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 알림 -->
+    <div id="notifications" class="notifications"></div>
+
+    <!-- 3D 텍스트 렌더링 -->
+    <div id="text3d-container"></div>
+
+    <!-- 데미지 표시 -->
+    <div id="damageDisplay" class="damage-display hidden"></div>
+
+    <script src="js/app.js"></script>
+    <script src="js/lobby.js"></script>
+    <script src="js/hud.js"></script>
+    <script src="js/spectator.js"></script>
+    <script src="js/text3d.js"></script>
+</body>
+</html>
