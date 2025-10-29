@@ -17,7 +17,8 @@ shared_scripts {
     'config/config.lua',
     'config/vehicles.lua',
     'config/items.lua',
-    'config/maps.lua'
+    'config/maps.lua',
+    'config/weapons.lua'
 }
 
 -- Client scripts
