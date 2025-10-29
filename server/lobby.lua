@@ -2,13 +2,8 @@
 local autoStartTimer = 0
 local autoStartActive = false
 
--- 로비 업데이트
-RegisterServerEvent('bumbercar:server:updateLobby')
-AddEventHandler('bumbercar:server:updateLobby', function()
-    if BumberCar.GameState ~= Constants.RoundState.LOBBY then
-        return
-    end
-
+-- 로비 데이터 생성 함수
+function GetLobbyData()
     local lobbyData = {
         players = {},
         currentMap = BumberCar.CurrentMap,
@@ -48,6 +43,37 @@ AddEventHandler('bumbercar:server:updateLobby', function()
         {id = Constants.GameMode.BOSS, name = '보스 모드', description = '한 명의 보스 vs 나머지 플레이어'}
     }
     lobbyData.gameModes = gameModes
+
+    return lobbyData
+end
+
+-- 로비 데이터 요청 (단일 플레이어)
+RegisterServerEvent('bumbercar:server:requestLobbyData')
+AddEventHandler('bumbercar:server:requestLobbyData', function()
+    local source = source
+    Utils.Debug('Lobby data requested by player:', source)
+
+    if BumberCar.GameState ~= Constants.RoundState.LOBBY then
+        Utils.Debug('Not in lobby state, ignoring request')
+        return
+    end
+
+    local lobbyData = GetLobbyData()
+    TriggerClientEvent('bumbercar:client:lobbyUpdate', source, lobbyData)
+
+    Utils.Debug('Sent lobby data to player:', source)
+end)
+
+-- 로비 업데이트 (모든 플레이어)
+RegisterServerEvent('bumbercar:server:updateLobby')
+AddEventHandler('bumbercar:server:updateLobby', function()
+    if BumberCar.GameState ~= Constants.RoundState.LOBBY then
+        Utils.Debug('Not in lobby state, skipping lobby update')
+        return
+    end
+
+    local lobbyData = GetLobbyData()
+    Utils.Debug('Updating lobby for all players with', #lobbyData.players, 'players')
 
     -- 모든 플레이어에게 업데이트
     TriggerClientEvent('bumbercar:client:lobbyUpdate', -1, lobbyData)

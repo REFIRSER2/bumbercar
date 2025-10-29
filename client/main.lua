@@ -81,11 +81,21 @@ end)
 -- 로비 열기
 RegisterNetEvent('bumbercar:client:openLobby')
 AddEventHandler('bumbercar:client:openLobby', function()
+    Utils.Debug('Opening lobby, current state:', BumberCar.GameState)
+
     if BumberCar.GameState == Constants.RoundState.LOBBY then
+        -- 서버에서 로비 데이터 요청
+        TriggerServerEvent('bumbercar:server:requestLobbyData')
+
+        -- 로비 UI 열기
         SendNUIMessage({
-            type = Constants.UIEvent.SHOW_LOBBY
+            type = 'bumbercar:ui:showLobby'
         })
         SetNuiFocus(true, true)
+
+        Utils.Debug('Lobby opened, NUI focus set')
+    else
+        Utils.Debug('Cannot open lobby, not in lobby state')
     end
 end)
 
@@ -100,32 +110,37 @@ end)
 
 -- 준비 완료/해제
 RegisterNUICallback('toggleReady', function(data, cb)
-    BumberCar.IsReady = not BumberCar.IsReady
+    BumberCar.IsReady = data.ready
+    Utils.Debug('Toggle ready:', BumberCar.IsReady)
     TriggerServerEvent('bumbercar:server:toggleReady', BumberCar.IsReady)
     cb('ok')
 end)
 
 -- 관전 모드 토글
 RegisterNUICallback('toggleSpectate', function(data, cb)
-    BumberCar.IsSpectating = not BumberCar.IsSpectating
+    BumberCar.IsSpectating = data.spectate
+    Utils.Debug('Toggle spectate:', BumberCar.IsSpectating)
     TriggerServerEvent('bumbercar:server:toggleSpectate', BumberCar.IsSpectating)
     cb('ok')
 end)
 
 -- 맵 선택
 RegisterNUICallback('selectMap', function(data, cb)
+    Utils.Debug('Selecting map:', data.map)
     TriggerServerEvent('bumbercar:server:selectMap', data.map)
     cb('ok')
 end)
 
 -- 게임 모드 선택
 RegisterNUICallback('selectGameMode', function(data, cb)
+    Utils.Debug('Selecting game mode:', data.gameMode)
     TriggerServerEvent('bumbercar:server:selectGameMode', data.gameMode)
     cb('ok')
 end)
 
 -- 로비 채팅 전송
 RegisterNUICallback('sendLobbyChat', function(data, cb)
+    Utils.Debug('Sending lobby chat:', data.message)
     TriggerServerEvent('bumbercar:server:lobbyChat', data.message)
     cb('ok')
 end)

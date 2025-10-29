@@ -1,4 +1,5 @@
 // 로비 스크립트
+console.log('[LOBBY] lobby.js loaded');
 let currentLobbyData = null;
 let isReady = false;
 let isSpectating = false;
@@ -7,21 +8,27 @@ let chatMessages = [];
 // 메시지 리스너
 window.addEventListener('message', function(event) {
     const data = event.data;
+    console.log('[LOBBY] Received message:', data.type, data);
 
     switch(data.type) {
         case 'bumbercar:ui:showLobby':
+            console.log('[LOBBY] Showing lobby');
             showLobby();
             break;
         case 'bumbercar:ui:hideLobby':
+            console.log('[LOBBY] Hiding lobby');
             hideLobby();
             break;
         case 'bumbercar:ui:updateLobby':
+            console.log('[LOBBY] Updating lobby with data:', data.data);
             updateLobby(data.data);
             break;
         case 'autoStartTimer':
+            console.log('[LOBBY] Auto start timer:', data.time);
             updateAutoStartTimer(data.time);
             break;
         case 'lobbyChatMessage':
+            console.log('[LOBBY] Chat message:', data.author, data.message);
             addChatMessage(data.author, data.message);
             break;
     }
@@ -41,12 +48,14 @@ function hideLobby() {
 
 // 로비 닫기 (NUI 포커스 해제 포함)
 function closeLobby() {
+    console.log('[LOBBY] Closing lobby');
     hideLobby();
     sendToLua('closeLobby', {});
 }
 
 // 로비 업데이트
 function updateLobby(data) {
+    console.log('[LOBBY] updateLobby called with:', data);
     currentLobbyData = data;
 
     // 정보 바 업데이트
@@ -139,16 +148,19 @@ function updateLobby(data) {
 
 // 맵 선택
 function selectMap(mapId) {
+    console.log('[LOBBY] Selecting map:', mapId);
     sendToLua('selectMap', { map: mapId });
 }
 
 // 게임 모드 선택
 function selectGameMode(gameMode) {
+    console.log('[LOBBY] Selecting game mode:', gameMode);
     sendToLua('selectGameMode', { gameMode: gameMode });
 }
 
 // 준비 완료/해제
 function toggleReady() {
+    console.log('[LOBBY] Toggling ready, current state:', isReady);
     isReady = !isReady;
 
     const readyBtn = document.getElementById('readyBtn');
@@ -162,16 +174,19 @@ function toggleReady() {
         readyBtn.classList.remove('ready');
     }
 
+    console.log('[LOBBY] Sending toggleReady to Lua with:', isReady);
     sendToLua('toggleReady', { ready: isReady });
 }
 
 // 관전 모드 토글
 function toggleSpectate() {
+    console.log('[LOBBY] Toggling spectate, current state:', isSpectating);
     isSpectating = !isSpectating;
 
     const spectateText = document.getElementById('spectateText');
     spectateText.textContent = isSpectating ? '게임 참가' : '관전 모드';
 
+    console.log('[LOBBY] Sending toggleSpectate to Lua with:', isSpectating);
     sendToLua('toggleSpectate', { spectate: isSpectating });
 }
 
@@ -212,10 +227,13 @@ function addChatMessage(author, message) {
 
 // 채팅 메시지 전송
 function sendChatMessage() {
+    console.log('[LOBBY] sendChatMessage called');
     const input = document.getElementById('chatInput');
     const message = input.value.trim();
+    console.log('[LOBBY] Chat message:', message);
 
     if (message.length > 0) {
+        console.log('[LOBBY] Sending chat message to Lua:', message);
         sendToLua('sendLobbyChat', { message: message });
         input.value = '';
     }

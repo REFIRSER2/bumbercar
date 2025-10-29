@@ -1,9 +1,11 @@
 // 메인 앱 스크립트
+console.log('[APP] BumberCar app.js loaded');
 let currentState = 'lobby';
 
 // NUI 메시지 수신
 window.addEventListener('message', function(event) {
     const data = event.data;
+    console.log('[APP] Received message:', data.type);
 
     switch(data.type) {
         case 'initialize':
@@ -126,14 +128,23 @@ document.addEventListener('keydown', function(e) {
 
 // Lua로 메시지 전송
 function sendToLua(callback, data) {
-    fetch(`https://${GetParentResourceName()}/${callback}`, {
+    console.log('[APP] Sending to Lua:', callback, data);
+    const url = `https://${GetParentResourceName()}/${callback}`;
+    console.log('[APP] URL:', url);
+
+    fetch(url, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
-    }).then(resp => resp.json()).then(resp => {
-        // 응답 처리
+    }).then(resp => {
+        console.log('[APP] Response received for', callback, ':', resp);
+        return resp.json();
+    }).then(resp => {
+        console.log('[APP] Response data for', callback, ':', resp);
+    }).catch(err => {
+        console.error('[APP] Error sending to Lua:', callback, err);
     });
 }
 
