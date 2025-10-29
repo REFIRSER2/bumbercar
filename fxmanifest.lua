@@ -22,6 +22,7 @@ shared_scripts {
 
 -- Client scripts
 client_scripts {
+    'client/spawn.lua',     -- 스폰 관리 (먼저 로드)
     'client/main.lua',
     'client/ui.lua',
     'client/lobby.lua',
