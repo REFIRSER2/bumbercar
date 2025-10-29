@@ -1,36 +1,24 @@
-// 3D 텍스트 시스템
+// ==================== 3D TEXT SCRIPT ====================
+console.log('[TEXT3D] text3d.js loaded');
+
+// Store all 3D text elements
 const text3DElements = {};
 
-// 메시지 리스너
-window.addEventListener('message', function(event) {
-    const data = event.data;
+// ==================== ADD 3D TEXT ====================
+function add3DText(id, text) {
+    console.log('[TEXT3D] Adding 3D text:', id, text);
+    const container = document.getElementById('text3dContainer');
+    if (!container) return;
 
-    switch(data.type) {
-        case 'show3DText':
-            show3DText(data.id, data.text, data.position);
-            break;
-        case 'update3DText':
-            update3DText(data.id, data.text, data.x, data.y, data.distance);
-            break;
-        case 'remove3DText':
-            remove3DText(data.id);
-            break;
-    }
-});
-
-// 3D 텍스트 표시
-function show3DText(id, text, position) {
-    const container = document.getElementById('text3d-container');
-
-    // 이미 존재하면 업데이트
+    // If element already exists, update text
     if (text3DElements[id]) {
         text3DElements[id].textContent = text;
         return;
     }
 
-    // 새로 생성
+    // Create new element
     const textElement = document.createElement('div');
-    textElement.className = 'text3d';
+    textElement.className = 'text3d-element';
     textElement.id = `text3d-${id}`;
     textElement.textContent = text;
 
@@ -38,36 +26,39 @@ function show3DText(id, text, position) {
     text3DElements[id] = textElement;
 }
 
-// 3D 텍스트 업데이트 (화면 좌표)
+// ==================== UPDATE 3D TEXT ====================
 function update3DText(id, text, x, y, distance) {
     let textElement = text3DElements[id];
 
-    // 없으면 생성
+    // Create if doesn't exist
     if (!textElement) {
-        const container = document.getElementById('text3d-container');
+        const container = document.getElementById('text3dContainer');
+        if (!container) return;
+
         textElement = document.createElement('div');
-        textElement.className = 'text3d';
+        textElement.className = 'text3d-element';
         textElement.id = `text3d-${id}`;
         container.appendChild(textElement);
         text3DElements[id] = textElement;
     }
 
-    // 위치 업데이트
+    // Update text and position
     textElement.textContent = text;
-    textElement.style.left = (x * 100) + '%';
-    textElement.style.top = (y * 100) + '%';
+    textElement.style.left = `${x * 100}%`;
+    textElement.style.top = `${y * 100}%`;
 
-    // 거리에 따라 크기 조정
-    const scale = Math.max(0.5, 1 - (distance / 50));
+    // Scale based on distance (closer = larger)
+    const scale = Math.max(0.5, Math.min(1.5, 1 - (distance / 100)));
     textElement.style.transform = `translate(-50%, -50%) scale(${scale})`;
 
-    // 거리에 따라 투명도 조정
-    const opacity = Math.max(0.3, 1 - (distance / 30));
+    // Opacity based on distance
+    const opacity = Math.max(0.2, Math.min(1, 1 - (distance / 50)));
     textElement.style.opacity = opacity;
 }
 
-// 3D 텍스트 제거
+// ==================== REMOVE 3D TEXT ====================
 function remove3DText(id) {
+    console.log('[TEXT3D] Removing 3D text:', id);
     const textElement = text3DElements[id];
     if (textElement) {
         textElement.remove();
@@ -75,9 +66,18 @@ function remove3DText(id) {
     }
 }
 
-// 모든 3D 텍스트 제거
+// ==================== CLEAR ALL 3D TEXT ====================
 function clearAll3DText() {
+    console.log('[TEXT3D] Clearing all 3D text');
     Object.keys(text3DElements).forEach(id => {
         remove3DText(id);
     });
 }
+
+// ==================== GLOBAL EXPORTS ====================
+window.add3DText = add3DText;
+window.update3DText = update3DText;
+window.remove3DText = remove3DText;
+window.clearAll3DText = clearAll3DText;
+
+console.log('[TEXT3D] text3d.js initialization complete');

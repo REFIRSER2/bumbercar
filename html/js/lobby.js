@@ -1,74 +1,45 @@
-// 로비 스크립트
+// ==================== LOBBY SCRIPT ====================
 console.log('[LOBBY] lobby.js loaded');
+
+// Lobby state
 let currentLobbyData = null;
 let isReady = false;
 let isSpectating = false;
-let chatMessages = [];
 
-// 메시지 리스너
-window.addEventListener('message', function(event) {
-    const data = event.data;
-    console.log('[LOBBY] Received message:', data.type, data);
-
-    switch(data.type) {
-        case 'bumbercar:ui:showLobby':
-            console.log('[LOBBY] Showing lobby');
-            showLobby();
-            break;
-        case 'bumbercar:ui:hideLobby':
-            console.log('[LOBBY] Hiding lobby');
-            hideLobby();
-            break;
-        case 'bumbercar:ui:updateLobby':
-            console.log('[LOBBY] Updating lobby with data:', data.data);
-            updateLobby(data.data);
-            break;
-        case 'autoStartTimer':
-            console.log('[LOBBY] Auto start timer:', data.time);
-            updateAutoStartTimer(data.time);
-            break;
-        case 'lobbyChatMessage':
-            console.log('[LOBBY] Chat message:', data.author, data.message);
-            addChatMessage(data.author, data.message);
-            break;
-    }
-});
-
-// 로비 표시
+// ==================== SHOW/HIDE LOBBY ====================
 function showLobby() {
-    document.getElementById('lobby').classList.remove('hidden');
-    // 채팅 입력 포커스 방지
-    document.getElementById('chatInput').blur();
+    console.log('[LOBBY] Showing lobby');
+    document.getElementById('lobbyContainer').classList.remove('hidden');
 }
 
-// 로비 숨기기
 function hideLobby() {
-    document.getElementById('lobby').classList.add('hidden');
+    console.log('[LOBBY] Hiding lobby');
+    document.getElementById('lobbyContainer').classList.add('hidden');
 }
 
-// 로비 닫기 (NUI 포커스 해제 포함)
 function closeLobby() {
-    console.log('[LOBBY] Closing lobby');
+    console.log('[LOBBY] Closing lobby (user initiated)');
     hideLobby();
     sendToLua('closeLobby', {});
 }
 
-// 로비 업데이트
+// ==================== LOBBY DATA UPDATE ====================
 function updateLobby(data) {
-    console.log('[LOBBY] updateLobby called with:', data);
+    console.log('[LOBBY] Updating lobby with data:', data);
     currentLobbyData = data;
 
-    // 정보 바 업데이트
+    // Update info bar
     const currentMap = data.maps.find(m => m.id === data.currentMap);
     const currentMode = data.gameModes.find(m => m.id === data.currentGameMode);
 
-    document.getElementById('currentMapName').textContent = currentMap ? currentMap.name : '-';
-    document.getElementById('currentGameModeName').textContent = currentMode ? currentMode.name.split(' ')[0] : '-';
-    document.getElementById('playerCountValue').textContent = data.players.length;
+    document.getElementById('currentMapDisplay').textContent = currentMap ? currentMap.name : '-';
+    document.getElementById('currentModeDisplay').textContent = currentMode ? currentMode.name : '-';
+    document.getElementById('currentPlayerCount').textContent = data.players.length;
+    document.getElementById('lobbyPlayerCount').textContent = `(${data.players.length})`;
 
-    // 맵 목록 업데이트
-    const mapList = document.getElementById('mapList');
-    mapList.innerHTML = '';
+    // Update map grid
+    const mapGrid = document.getElementById('mapGrid');
+    mapGrid.innerHTML = '';
 
     data.maps.forEach(map => {
         const mapCard = document.createElement('div');
@@ -78,36 +49,36 @@ function updateLobby(data) {
         }
 
         mapCard.innerHTML = `
-            <div class="map-icon">${map.icon}</div>
+            <div class="map-icon">${map.icon || '🗺️'}</div>
             <div class="map-name">${map.name}</div>
-            <div class="map-desc">${map.description}</div>
+            <div class="map-desc">${map.description || ''}</div>
         `;
 
         mapCard.onclick = () => selectMap(map.id);
-        mapList.appendChild(mapCard);
+        mapGrid.appendChild(mapCard);
     });
 
-    // 게임 모드 목록 업데이트
-    const gameModeList = document.getElementById('gameModeList');
-    gameModeList.innerHTML = '';
+    // Update game mode grid
+    const gameModeGrid = document.getElementById('gameModeGrid');
+    gameModeGrid.innerHTML = '';
 
     data.gameModes.forEach(mode => {
         const modeCard = document.createElement('div');
-        modeCard.className = 'gamemode-card';
+        modeCard.className = 'mode-card';
         if (mode.id === data.currentGameMode) {
             modeCard.classList.add('selected');
         }
 
         modeCard.innerHTML = `
-            <div class="map-name">${mode.name}</div>
-            <div class="map-desc">${mode.description}</div>
+            <div class="mode-name">${mode.name}</div>
+            <div class="mode-desc">${mode.description || ''}</div>
         `;
 
         modeCard.onclick = () => selectGameMode(mode.id);
-        gameModeList.appendChild(modeCard);
+        gameModeGrid.appendChild(modeCard);
     });
 
-    // 플레이어 목록 업데이트
+    // Update player list
     const playerList = document.getElementById('playerList');
     playerList.innerHTML = '';
 
@@ -124,7 +95,7 @@ function updateLobby(data) {
 
         let statusIcon = '';
         if (player.spectating) {
-            statusIcon = '👁️';
+            statusIcon = '👁';
         } else if (player.ready) {
             statusIcon = '✅';
         } else {
@@ -132,114 +103,111 @@ function updateLobby(data) {
         }
 
         playerItem.innerHTML = `
-            <span class="player-name">${player.name}</span>
+            <span class="player-name">${escapeHtml(player.name)}</span>
             <span class="player-status">${statusIcon}</span>
         `;
 
         playerList.appendChild(playerItem);
     });
-
-    // 사이드바 플레이어 카운트 업데이트
-    const menuTitle = document.querySelector('.menu-section-title');
-    if (menuTitle) {
-        menuTitle.textContent = `플레이어 (${data.players.length})`;
-    }
 }
 
-// 맵 선택
+// ==================== MAP/MODE SELECTION ====================
 function selectMap(mapId) {
     console.log('[LOBBY] Selecting map:', mapId);
     sendToLua('selectMap', { map: mapId });
 }
 
-// 게임 모드 선택
-function selectGameMode(gameMode) {
-    console.log('[LOBBY] Selecting game mode:', gameMode);
-    sendToLua('selectGameMode', { gameMode: gameMode });
+function selectGameMode(gameModeId) {
+    console.log('[LOBBY] Selecting game mode:', gameModeId);
+    sendToLua('selectGameMode', { gameMode: gameModeId });
 }
 
-// 준비 완료/해제
+// ==================== READY/SPECTATE BUTTONS ====================
 function toggleReady() {
     console.log('[LOBBY] Toggling ready, current state:', isReady);
     isReady = !isReady;
 
     const readyBtn = document.getElementById('readyBtn');
-    const readyText = document.getElementById('readyText');
+    const readyBtnText = document.getElementById('readyBtnText');
 
     if (isReady) {
-        readyText.textContent = '준비 해제';
-        readyBtn.classList.add('ready');
+        readyBtnText.textContent = '준비 해제';
+        readyBtn.classList.add('active');
     } else {
-        readyText.textContent = '준비 완료';
-        readyBtn.classList.remove('ready');
+        readyBtnText.textContent = '준비 완료';
+        readyBtn.classList.remove('active');
     }
 
-    console.log('[LOBBY] Sending toggleReady to Lua with:', isReady);
     sendToLua('toggleReady', { ready: isReady });
 }
 
-// 관전 모드 토글
 function toggleSpectate() {
     console.log('[LOBBY] Toggling spectate, current state:', isSpectating);
     isSpectating = !isSpectating;
 
-    const spectateText = document.getElementById('spectateText');
-    spectateText.textContent = isSpectating ? '게임 참가' : '관전 모드';
+    const spectateBtn = document.getElementById('spectateBtn');
+    const spectateBtnText = document.getElementById('spectateBtnText');
 
-    console.log('[LOBBY] Sending toggleSpectate to Lua with:', isSpectating);
+    if (isSpectating) {
+        spectateBtnText.textContent = '게임 참가';
+        spectateBtn.classList.add('active');
+    } else {
+        spectateBtnText.textContent = '관전 모드';
+        spectateBtn.classList.remove('active');
+    }
+
     sendToLua('toggleSpectate', { spectate: isSpectating });
 }
 
-// 자동 시작 타이머 업데이트
+// ==================== AUTO-START TIMER ====================
 function updateAutoStartTimer(time) {
     const timerElement = document.getElementById('autoStartTimer');
-    const timeText = document.getElementById('autoStartTime');
+    const secondsElement = document.getElementById('autoStartSeconds');
 
     if (time > 0) {
         timerElement.classList.remove('hidden');
-        timeText.textContent = time;
+        secondsElement.textContent = time;
     } else {
         timerElement.classList.add('hidden');
     }
 }
 
-// 채팅 메시지 추가
+// ==================== CHAT ====================
 function addChatMessage(author, message) {
     const chatContainer = document.getElementById('chatMessages');
+    if (!chatContainer) return;
 
     const messageDiv = document.createElement('div');
     messageDiv.className = 'chat-message';
     messageDiv.innerHTML = `
-        <span class="chat-author">${author}:</span>
+        <span class="chat-author">${escapeHtml(author)}:</span>
         <span class="chat-text">${escapeHtml(message)}</span>
     `;
 
     chatContainer.appendChild(messageDiv);
 
-    // 스크롤 맨 아래로
+    // Auto-scroll to bottom
     chatContainer.scrollTop = chatContainer.scrollHeight;
 
-    // 메시지 제한 (최대 50개)
+    // Limit messages (max 50)
     while (chatContainer.children.length > 50) {
         chatContainer.removeChild(chatContainer.firstChild);
     }
 }
 
-// 채팅 메시지 전송
 function sendChatMessage() {
-    console.log('[LOBBY] sendChatMessage called');
+    console.log('[LOBBY] Sending chat message');
     const input = document.getElementById('chatInput');
     const message = input.value.trim();
-    console.log('[LOBBY] Chat message:', message);
 
     if (message.length > 0) {
-        console.log('[LOBBY] Sending chat message to Lua:', message);
+        console.log('[LOBBY] Chat message:', message);
         sendToLua('sendLobbyChat', { message: message });
         input.value = '';
     }
 }
 
-// 엔터키로 채팅 전송
+// ==================== CHAT INPUT EVENTS ====================
 document.addEventListener('DOMContentLoaded', function() {
     const chatInput = document.getElementById('chatInput');
     if (chatInput) {
@@ -251,14 +219,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// HTML 이스케이프 (XSS 방지)
-function escapeHtml(text) {
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return text.replace(/[&<>"']/g, m => map[m]);
-}
+// ==================== GLOBAL EXPORTS ====================
+window.showLobby = showLobby;
+window.hideLobby = hideLobby;
+window.closeLobby = closeLobby;
+window.updateLobby = updateLobby;
+window.selectMap = selectMap;
+window.selectGameMode = selectGameMode;
+window.toggleReady = toggleReady;
+window.toggleSpectate = toggleSpectate;
+window.updateAutoStartTimer = updateAutoStartTimer;
+window.addChatMessage = addChatMessage;
+window.sendChatMessage = sendChatMessage;
+
+console.log('[LOBBY] lobby.js initialization complete');
