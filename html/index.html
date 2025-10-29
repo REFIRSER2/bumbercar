@@ -10,48 +10,83 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- 로비 UI -->
+    <!-- 로비 UI (GTA 5 스타일) -->
     <div id="lobby" class="container hidden">
+        <button class="close-btn" onclick="closeLobby()">✕</button>
+
         <div class="lobby-container">
-            <div class="lobby-header">
-                <h1>🏎️ 범퍼카 로비</h1>
-                <button class="close-btn" onclick="closeLobby()">✕</button>
+            <!-- 왼쪽 사이드바 -->
+            <div class="lobby-sidebar">
+                <div class="lobby-header">
+                    <h1>BUMPER CAR</h1>
+                    <div class="lobby-subtitle">범퍼카 로비</div>
+                </div>
+
+                <!-- 메뉴 -->
+                <div class="lobby-menu">
+                    <!-- 플레이어 목록 -->
+                    <div class="menu-section">
+                        <div class="menu-section-title">플레이어 ({playerCount})</div>
+                        <div id="playerList"></div>
+                    </div>
+                </div>
+
+                <!-- 액션 버튼 -->
+                <div class="lobby-actions">
+                    <button class="lobby-btn" id="readyBtn" onclick="toggleReady()">
+                        <span id="readyText">준비 완료</span>
+                    </button>
+                    <button class="lobby-btn spectate" id="spectateBtn" onclick="toggleSpectate()">
+                        <span id="spectateText">관전 모드</span>
+                    </button>
+                </div>
             </div>
 
-            <div class="lobby-content">
+            <!-- 오른쪽 메인 영역 -->
+            <div class="lobby-main">
+                <!-- 정보 바 -->
+                <div class="lobby-info-bar">
+                    <div class="info-item">
+                        <div class="info-label">현재 맵</div>
+                        <div class="info-value" id="currentMapName">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">게임 모드</div>
+                        <div class="info-value" id="currentGameModeName">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">플레이어</div>
+                        <div class="info-value" id="playerCountValue">0</div>
+                    </div>
+                </div>
+
                 <!-- 맵 선택 -->
                 <div class="section">
-                    <h2>맵 선택</h2>
+                    <h2 style="color: #FFC107; margin-bottom: 15px;">맵 선택</h2>
                     <div id="mapList" class="map-grid"></div>
                 </div>
 
                 <!-- 게임 모드 선택 -->
                 <div class="section">
-                    <h2>게임 모드</h2>
+                    <h2 style="color: #FFC107; margin-bottom: 15px;">게임 모드</h2>
                     <div id="gameModeList" class="gamemode-grid"></div>
                 </div>
 
-                <!-- 플레이어 목록 -->
-                <div class="section">
-                    <h2>플레이어 목록</h2>
-                    <div id="playerList" class="player-list"></div>
-                </div>
-
-                <!-- 버튼들 -->
-                <div class="section">
-                    <button class="btn btn-primary" onclick="toggleReady()">
-                        <span id="readyText">준비 완료</span>
-                    </button>
-                    <button class="btn btn-secondary" onclick="toggleSpectate()">
-                        <span id="spectateText">관전 모드</span>
-                    </button>
-                </div>
-
-                <!-- 자동 시작 타이머 -->
-                <div id="autoStartTimer" class="auto-start-timer hidden">
-                    <p>게임 시작까지: <span id="autoStartTime">30</span>초</p>
+                <!-- 채팅 -->
+                <div class="lobby-chat">
+                    <div class="menu-section-title">로비 채팅</div>
+                    <div class="chat-messages" id="chatMessages"></div>
+                    <div class="chat-input-container">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="메시지를 입력하세요..." maxlength="100">
+                        <button class="chat-send-btn" onclick="sendChatMessage()">전송</button>
+                    </div>
                 </div>
             </div>
+        </div>
+
+        <!-- 자동 시작 타이머 -->
+        <div id="autoStartTimer" class="auto-start-timer hidden">
+            게임 시작: <span id="autoStartTime">30</span>초
         </div>
     </div>
 

@@ -12,7 +12,7 @@ BumberCar.IsSpectating = false
 
 -- 초기화
 RegisterNetEvent('bumbercar:client:initialize')
-AddEventHandler('bumbercar:client:initialize', function()
+AddEventHandler('bumbercar:client:initialize', function(autoOpenLobby)
     Utils.Debug('Client initialized')
 
     -- 로비로 텔레포트
@@ -24,6 +24,13 @@ AddEventHandler('bumbercar:client:initialize', function()
     SendNUIMessage({
         type = 'initialize'
     })
+
+    -- 로비가 대기 상태면 자동으로 열기
+    if autoOpenLobby then
+        Citizen.SetTimeout(1000, function()
+            TriggerEvent('bumbercar:client:openLobby')
+        end)
+    end
 end)
 
 -- 정리
@@ -115,6 +122,22 @@ end)
 RegisterNUICallback('selectGameMode', function(data, cb)
     TriggerServerEvent('bumbercar:server:selectGameMode', data.gameMode)
     cb('ok')
+end)
+
+-- 로비 채팅 전송
+RegisterNUICallback('sendLobbyChat', function(data, cb)
+    TriggerServerEvent('bumbercar:server:lobbyChat', data.message)
+    cb('ok')
+end)
+
+-- 로비 채팅 수신
+RegisterNetEvent('bumbercar:client:lobbyChatMessage')
+AddEventHandler('bumbercar:client:lobbyChatMessage', function(author, message)
+    SendNUIMessage({
+        type = 'lobbyChatMessage',
+        author = author,
+        message = message
+    })
 end)
 
 -- 차량 스폰

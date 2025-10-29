@@ -2,6 +2,7 @@
 let currentLobbyData = null;
 let isReady = false;
 let isSpectating = false;
+let chatMessages = [];
 
 // 메시지 리스너
 window.addEventListener('message', function(event) {
@@ -20,12 +21,17 @@ window.addEventListener('message', function(event) {
         case 'autoStartTimer':
             updateAutoStartTimer(data.time);
             break;
+        case 'lobbyChatMessage':
+            addChatMessage(data.author, data.message);
+            break;
     }
 });
 
 // 로비 표시
 function showLobby() {
     document.getElementById('lobby').classList.remove('hidden');
+    // 채팅 입력 포커스 방지
+    document.getElementById('chatInput').blur();
 }
 
 // 로비 숨기기
@@ -33,7 +39,7 @@ function hideLobby() {
     document.getElementById('lobby').classList.add('hidden');
 }
 
-// 로비 닫기
+// 로비 닫기 (NUI 포커스 해제 포함)
 function closeLobby() {
     hideLobby();
     sendToLua('closeLobby', {});
@@ -42,6 +48,14 @@ function closeLobby() {
 // 로비 업데이트
 function updateLobby(data) {
     currentLobbyData = data;
+
+    // 정보 바 업데이트
+    const currentMap = data.maps.find(m => m.id === data.currentMap);
+    const currentMode = data.gameModes.find(m => m.id === data.currentGameMode);
+
+    document.getElementById('currentMapName').textContent = currentMap ? currentMap.name : '-';
+    document.getElementById('currentGameModeName').textContent = currentMode ? currentMode.name.split(' ')[0] : '-';
+    document.getElementById('playerCountValue').textContent = data.players.length;
 
     // 맵 목록 업데이트
     const mapList = document.getElementById('mapList');
@@ -109,12 +123,18 @@ function updateLobby(data) {
         }
 
         playerItem.innerHTML = `
-            <span>${player.name}</span>
-            <span>${statusIcon}</span>
+            <span class="player-name">${player.name}</span>
+            <span class="player-status">${statusIcon}</span>
         `;
 
         playerList.appendChild(playerItem);
     });
+
+    // 사이드바 플레이어 카운트 업데이트
+    const menuTitle = document.querySelector('.menu-section-title');
+    if (menuTitle) {
+        menuTitle.textContent = `플레이어 (${data.players.length})`;
+    }
 }
 
 // 맵 선택
@@ -131,8 +151,16 @@ function selectGameMode(gameMode) {
 function toggleReady() {
     isReady = !isReady;
 
+    const readyBtn = document.getElementById('readyBtn');
     const readyText = document.getElementById('readyText');
-    readyText.textContent = isReady ? '준비 해제' : '준비 완료';
+
+    if (isReady) {
+        readyText.textContent = '준비 해제';
+        readyBtn.classList.add('ready');
+    } else {
+        readyText.textContent = '준비 완료';
+        readyBtn.classList.remove('ready');
+    }
 
     sendToLua('toggleReady', { ready: isReady });
 }
@@ -158,4 +186,61 @@ function updateAutoStartTimer(time) {
     } else {
         timerElement.classList.add('hidden');
     }
+}
+
+// 채팅 메시지 추가
+function addChatMessage(author, message) {
+    const chatContainer = document.getElementById('chatMessages');
+
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'chat-message';
+    messageDiv.innerHTML = `
+        <span class="chat-author">${author}:</span>
+        <span class="chat-text">${escapeHtml(message)}</span>
+    `;
+
+    chatContainer.appendChild(messageDiv);
+
+    // 스크롤 맨 아래로
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    // 메시지 제한 (최대 50개)
+    while (chatContainer.children.length > 50) {
+        chatContainer.removeChild(chatContainer.firstChild);
+    }
+}
+
+// 채팅 메시지 전송
+function sendChatMessage() {
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+
+    if (message.length > 0) {
+        sendToLua('sendLobbyChat', { message: message });
+        input.value = '';
+    }
+}
+
+// 엔터키로 채팅 전송
+document.addEventListener('DOMContentLoaded', function() {
+    const chatInput = document.getElementById('chatInput');
+    if (chatInput) {
+        chatInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendChatMessage();
+            }
+        });
+    }
+});
+
+// HTML 이스케이프 (XSS 방지)
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
 }

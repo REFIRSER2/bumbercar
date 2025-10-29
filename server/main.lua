@@ -106,7 +106,14 @@ AddEventHandler('playerJoining', function()
     Citizen.Wait(1000)
 
     if BumberCar.Players[source] then
-        TriggerClientEvent('bumbercar:client:initialize', source)
+        -- 로비 상태면 자동으로 로비 열기
+        local autoOpenLobby = (BumberCar.GameState == Constants.RoundState.LOBBY)
+        TriggerClientEvent('bumbercar:client:initialize', source, autoOpenLobby)
+
+        -- 로비 업데이트
+        if BumberCar.GameState == Constants.RoundState.LOBBY then
+            TriggerEvent('bumbercar:server:updateLobby')
+        end
     end
 end)
 
@@ -126,11 +133,15 @@ AddEventHandler('onResourceStart', function(resourceName)
         for _, playerId in ipairs(players) do
             local source = tonumber(playerId)
             BumberCar.InitPlayer(source)
-            TriggerClientEvent('bumbercar:client:initialize', source)
+            local autoOpenLobby = (BumberCar.GameState == Constants.RoundState.LOBBY)
+            TriggerClientEvent('bumbercar:client:initialize', source, autoOpenLobby)
         end
 
         -- 첫 맵 설정
         BumberCar.CurrentMap = Config.DefaultMap
+
+        -- 로비 업데이트
+        TriggerEvent('bumbercar:server:updateLobby')
     end
 end)
 

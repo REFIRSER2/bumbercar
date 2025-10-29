@@ -229,3 +229,30 @@ AddEventHandler('bumbercar:server:lobbyReset', function()
     autoStartActive = false
     autoStartTimer = 0
 end)
+
+-- 로비 채팅
+RegisterServerEvent('bumbercar:server:lobbyChat')
+AddEventHandler('bumbercar:server:lobbyChat', function(message)
+    local source = source
+    if not BumberCar.Players[source] then return end
+
+    -- 메시지 길이 제한
+    message = string.sub(message, 1, 100)
+
+    -- 모든 플레이어에게 전송
+    local author = GetPlayerName(source)
+    TriggerClientEvent('bumbercar:client:lobbyChatMessage', -1, author, message)
+
+    Utils.Debug('Lobby chat:', author, '-', message)
+end)
+
+-- 주기적인 로비 업데이트 (플레이어 목록 갱신용)
+Citizen.CreateThread(function()
+    while true do
+        Wait(2000) -- 2초마다 갱신
+
+        if BumberCar.GameState == Constants.RoundState.LOBBY then
+            TriggerEvent('bumbercar:server:updateLobby')
+        end
+    end
+end)
