@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BumberCar - GTA 5 Style</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- ==================== LOBBY CONTAINER ==================== -->
+    <div id="lobbyContainer" class="lobby-container hidden">
+        <!-- Close Button -->
+        <button class="close-btn" onclick="closeLobby()">✕</button>
+
+        <div class="lobby-wrapper">
+            <!-- Left Sidebar -->
+            <div class="lobby-sidebar">
+                <!-- Logo -->
+                <div class="lobby-header">
+                    <h1 class="lobby-title">BUMPER CAR</h1>
+                    <div class="lobby-subtitle">범퍼카 게임 로비</div>
+                </div>
+
+                <!-- Player List -->
+                <div class="lobby-section">
+                    <div class="section-title">플레이어 <span id="lobbyPlayerCount">(0)</span></div>
+                    <div id="playerList" class="player-list"></div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="lobby-actions">
+                    <button class="action-btn ready-btn" id="readyBtn" onclick="toggleReady()">
+                        <span id="readyBtnText">준비 완료</span>
+                    </button>
+                    <button class="action-btn spectate-btn" id="spectateBtn" onclick="toggleSpectate()">
+                        <span id="spectateBtnText">관전 모드</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Main Area -->
+            <div class="lobby-main">
+                <!-- Info Bar -->
+                <div class="lobby-info-bar">
+                    <div class="info-card">
+                        <div class="info-label">현재 맵</div>
+                        <div class="info-value" id="currentMapDisplay">-</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">게임 모드</div>
+                        <div class="info-value" id="currentModeDisplay">-</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">플레이어</div>
+                        <div class="info-value" id="currentPlayerCount">0</div>
+                    </div>
+                </div>
+
+                <!-- Map Selection -->
+                <div class="lobby-section">
+                    <h2 class="section-heading">맵 선택</h2>
+                    <div id="mapGrid" class="map-grid"></div>
+                </div>
+
+                <!-- Game Mode Selection -->
+                <div class="lobby-section">
+                    <h2 class="section-heading">게임 모드 선택</h2>
+                    <div id="gameModeGrid" class="mode-grid"></div>
+                </div>
+
+                <!-- Chat Section -->
+                <div class="lobby-chat-section">
+                    <div class="section-title">로비 채팅</div>
+                    <div id="chatMessages" class="chat-messages"></div>
+                    <div class="chat-input-wrapper">
+                        <input type="text" id="chatInput" class="chat-input" placeholder="메시지를 입력하세요..." maxlength="100">
+                        <button class="chat-send-btn" onclick="sendChatMessage()">전송</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auto-Start Timer -->
+        <div id="autoStartTimer" class="auto-start-timer hidden">
+            <div class="timer-icon">⏱</div>
+            <div class="timer-text">
+                게임 시작까지 <span id="autoStartSeconds">30</span>초
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== GAME HUD CONTAINER ==================== -->
+    <div id="gameHUD" class="game-hud hidden">
+        <!-- Vehicle Stats (Top Left) -->
+        <div class="vehicle-stats">
+            <div class="stat-group">
+                <div class="stat-label">체력</div>
+                <div class="health-bar-container">
+                    <div id="healthBar" class="health-bar"></div>
+                    <span id="healthText" class="health-text">1000/1000</span>
+                </div>
+            </div>
+            <div class="stat-row">
+                <div class="stat-box">
+                    <span class="stat-icon">⚔</span>
+                    <span class="stat-name">공격력</span>
+                    <span id="damageValue" class="stat-value">50</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-icon">🛡</span>
+                    <span class="stat-name">방어력</span>
+                    <span id="defenseValue" class="stat-value">100</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-icon">⚡</span>
+                    <span class="stat-name">속도</span>
+                    <span id="speedValue" class="stat-value">0 km/h</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Item Slots (Bottom Left) -->
+        <div class="item-slots">
+            <div class="item-slot" id="itemSlot1">
+                <div class="slot-keybind">G</div>
+                <div class="slot-icon" id="slot1Icon"></div>
+                <div class="slot-name" id="slot1Name"></div>
+            </div>
+            <div class="item-slot" id="itemSlot2">
+                <div class="slot-keybind">H</div>
+                <div class="slot-icon" id="slot2Icon"></div>
+                <div class="slot-name" id="slot2Name"></div>
+            </div>
+        </div>
+
+        <!-- Active Effects (Bottom Center) -->
+        <div id="activeEffects" class="active-effects"></div>
+
+        <!-- Round Timer (Top Center) -->
+        <div class="round-timer">
+            <div class="timer-label" id="gameModeLabel">범퍼카</div>
+            <div id="roundTimer" class="timer-value">05:00</div>
+        </div>
+
+        <!-- Bomb Timer (Center Screen) -->
+        <div id="bombTimer" class="bomb-timer hidden">
+            <div class="bomb-icon">💣</div>
+            <div class="bomb-title">폭탄 보유!</div>
+            <div class="bomb-countdown" id="bombCountdown">60</div>
+            <div class="bomb-hint">다른 플레이어와 충돌하여 폭탄을 넘기세요!</div>
+        </div>
+
+        <!-- Boundary Warning (Center Screen) -->
+        <div id="boundaryWarning" class="boundary-warning hidden">
+            <div class="warning-icon">⚠</div>
+            <div class="warning-title">경계 이탈!</div>
+            <div class="warning-countdown" id="boundaryCountdown">5</div>
+            <div class="warning-text">초 후 폭발합니다!</div>
+        </div>
+    </div>
+
+    <!-- ==================== WEAPON HUD CONTAINER ==================== -->
+    <div id="weaponHUD" class="weapon-hud hidden">
+        <!-- Ammo Counter (Bottom Right) -->
+        <div class="ammo-counter">
+            <div class="ammo-current" id="ammoCurrent">30</div>
+            <div class="ammo-divider">/</div>
+            <div class="ammo-max" id="ammoMax">120</div>
+        </div>
+
+        <!-- Crosshair (Center) -->
+        <div id="crosshair" class="crosshair hidden">
+            <div class="crosshair-dot"></div>
+            <div class="crosshair-line crosshair-top"></div>
+            <div class="crosshair-line crosshair-right"></div>
+            <div class="crosshair-line crosshair-bottom"></div>
+            <div class="crosshair-line crosshair-left"></div>
+        </div>
+
+        <!-- Hit Marker (Center) -->
+        <div id="hitMarker" class="hit-marker hidden">
+            <div class="hit-line hit-line-1"></div>
+            <div class="hit-line hit-line-2"></div>
+        </div>
+
+        <!-- Lock-on Indicator -->
+        <div id="lockOnIndicator" class="lock-on-indicator hidden">
+            <div class="lock-brackets">
+                <div class="lock-bracket lock-tl"></div>
+                <div class="lock-bracket lock-tr"></div>
+                <div class="lock-bracket lock-bl"></div>
+                <div class="lock-bracket lock-br"></div>
+            </div>
+            <div class="lock-text">목표 고정됨</div>
+        </div>
+
+        <!-- Damage Numbers Container -->
+        <div id="damageNumbers" class="damage-numbers"></div>
+    </div>
+
+    <!-- ==================== SPECTATOR UI CONTAINER ==================== -->
+    <div id="spectatorUI" class="spectator-ui hidden">
+        <div class="spectator-overlay"></div>
+        <div class="spectator-info">
+            <div class="spectator-label">관전 중</div>
+            <div class="spectator-name" id="spectatorTargetName">-</div>
+        </div>
+        <div class="spectator-controls">
+            <span class="control-hint">◀ 좌클릭: 이전</span>
+            <span class="control-divider">|</span>
+            <span class="control-hint">우클릭: 다음 ▶</span>
+        </div>
+        <div class="spectator-count">
+            <span id="spectatorIndex">1</span> / <span id="spectatorTotal">1</span>
+        </div>
+    </div>
+
+    <!-- ==================== RESULTS SCREEN CONTAINER ==================== -->
+    <div id="resultsScreen" class="results-screen hidden">
+        <div class="results-overlay"></div>
+        <div class="results-container">
+            <div class="results-header">
+                <h1 class="results-winner" id="resultsWinner">게임 종료</h1>
+                <div class="results-subtitle">최종 결과</div>
+            </div>
+            <div class="results-table-wrapper">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>순위</th>
+                            <th>플레이어</th>
+                            <th>킬</th>
+                            <th>데스</th>
+                            <th>데미지</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsTableBody"></tbody>
+                </table>
+            </div>
+            <div class="results-footer">
+                <span id="lobbyReturnCountdown">10</span>초 후 로비로 복귀
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== NOTIFICATIONS CONTAINER ==================== -->
+    <div id="notifications" class="notifications-container"></div>
+
+    <!-- ==================== 3D TEXT CONTAINER ==================== -->
+    <div id="text3dContainer" class="text3d-container"></div>
+
+    <!-- ==================== SCRIPTS ==================== -->
+    <script src="js/app.js"></script>
+    <script src="js/lobby.js"></script>
+    <script src="js/hud.js"></script>
+    <script src="js/spectator.js"></script>
+    <script src="js/text3d.js"></script>
+    <script src="js/results.js"></script>
+</body>
+</html>
